@@ -1,0 +1,15 @@
+{
+  "name": "haappy-tv-services",
+  "version": "1.0.0",
+  "description": "Haappy TV Services contains RESTfull services and DB objects",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "HaappyApp",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2"
+  }
+}
