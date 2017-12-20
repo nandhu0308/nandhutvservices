@@ -4,7 +4,7 @@ var ApplicationUsers = require('./../models/application-users-model');
 var userSignUp = function(req, res) {
     reqObj = req.body;
     console.log(reqObj);
-    ApplicationUsers.creat({
+    ApplicationUsers.create({
         application_id: reqObj.application_id,
         user_type: reqObj.user_type,
         user_short_name: reqObj.user_short_name,
@@ -42,6 +42,7 @@ var userSignUp = function(req, res) {
 var userLogin = function (req, res) {
     reqObj = req.body;
     console.log(reqObj.user);
+    // noinspection JSAnnotator
     ApplicationUsers.findOne({
         where: {
             email_id: reqObj.email_id,
@@ -69,16 +70,23 @@ var userLogin = function (req, res) {
 
 var getUser = function (req, res) {
     var token = req.headers.authorization;
-    jwt.verify(token, 'passsecret', function (err, decoded) {
+    jwt.verify(token, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', function (err, decoded) {
         if (err) {
             res.status(401).json({
                 message: 'Not authorized'
             });
         } else if (decoded) {
-            console.log(decoded);
-            res.status(200).json({
-                userid: 101,
-                email: 'ram@some.com'
+            ApplicationUsers.findById(decoded.user_id, {
+                attributes: {
+                    exclude: ['created_on', 'last_updated_on', 'passwd', 'utm_source', 'utm_medium', 'utm_campign', 'utm_term', 'utm_content']
+                }
+            }).then(user => {
+                res.status(200).json(user);
+            }).catch(err => {
+                res.status(500).json({
+                    error: err,
+                    message: 'something went wrong'
+                });
             });
         }
     });
