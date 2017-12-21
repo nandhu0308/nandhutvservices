@@ -2,7 +2,7 @@ var jwt = require('jsonwebtoken');
 var ApplicationUsers = require('./../models/application-users-model');
 
 var userSignUp = function(req, res) {
-    reqObj = req.body;
+    var reqObj = req.body;
     console.log(reqObj);
     ApplicationUsers.create({
         application_id: reqObj.application_id,
@@ -23,7 +23,7 @@ var userSignUp = function(req, res) {
         last_updated_by: reqObj.last_updated_by
     }).then(user => {
         console.log(user.id);
-        token = jwt.sign({
+        var token = jwt.sign({
             user_id: user.id
         }, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', {expiresIn: '7d'});
         res.status(200).json({
@@ -40,7 +40,7 @@ var userSignUp = function(req, res) {
 };
 
 var userLogin = function (req, res) {
-    reqObj = req.body;
+    var reqObj = req.body;
     console.log(reqObj.user);
     // noinspection JSAnnotator
     ApplicationUsers.findOne({
@@ -52,13 +52,22 @@ var userLogin = function (req, res) {
             exclude: ['passwd','created_by', 'created_on', 'last_updated_by', 'last_updated_on']
         }
     }).then(user => {
-        token = jwt.sign({
-            user_id: user.id
-        }, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', { expiresIn: '7d' });
-        res.status(200).json({
-            user: user,
-            token: token
-        });
+        if(user == null) {
+            res.status(404).json({
+                success: false,
+                status: 404,
+                message: 'User not found'
+            });
+        } else if (user != null) {
+            var token = jwt.sign({
+                user_id: user.id
+            }, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', { expiresIn: '7d' });
+            res.status(200).json({
+                success: true,
+                user: user,
+                token: token
+            });
+        }
     }).catch(err => {
         console.log(err);
         res.status(500).json({
@@ -73,6 +82,8 @@ var getUser = function (req, res) {
     jwt.verify(token, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', function (err, decoded) {
         if (err) {
             res.status(401).json({
+                success: false,
+                status: 404,
                 message: 'Not authorized'
             });
         } else if (decoded) {
@@ -92,8 +103,61 @@ var getUser = function (req, res) {
     });
 };
 
+var userPasswordChange = function (req, res) {
+    var token = req.headers.authorization;
+    jwt.verify(token, '19cf80e8837fe0b043da07632f05b5c5e6551f9ae36bd34de7ce6099980cdddb', function (err, decoded) {
+        if(err) {
+            res.status(401).json({
+                success: false,
+                status: 401,
+                message: 'Not Authorized'
+            });
+        } else if(decoded) {
+            var reqObj = req.body;
+            ApplicationUsers.findById(decoded.user_id).then(user => {
+                if(user == null) {
+                    res.status(404).json({
+                        success: false,
+                        status: 404,
+                        message: 'Not Authorized'
+                    });
+                } else {
+                    ApplicationUsers.updateAttributes({
+                        passwd: reqObj.new_passwd
+                    }).then(updatedUser => {
+                        res.status(200).json({
+                            success: true,
+                            status: 200,
+                            message: 'Password Updated'
+                        });
+                    }).catch(err => {
+                        console.log(err);
+                        res.status(500).json({
+                            success: false,
+                            status: 500,
+                            message: 'Something went wrong'
+                        });
+                    });
+                }
+            }).catch(err => {
+                console.log(err);
+                res.status(500).json({
+                    success: false,
+                    status: 500,
+                    message: 'Something went wrong'
+                });
+            })
+        }
+    });
+};
+
+var userLogout = function (req, res) {
+    var token = req.headers.authorization;
+}
+
 module.exports = {
     getUser: getUser,
     userLogin: userLogin,
-    userSignUp: userSignUp
+    userSignUp: userSignUp,
+    userPasswordChange: userPasswordChange
 }
