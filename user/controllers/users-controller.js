@@ -151,10 +151,6 @@ var userPasswordChange = function (req, res) {
     });
 };
 
-var userLogout = function (req, res) {
-    var token = req.headers.authorization;
-}
-
 module.exports = {
     getUser: getUser,
     userLogin: userLogin,
